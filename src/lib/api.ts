@@ -51,17 +51,6 @@ export const api = {
     return data;
   },
 
-  async updateBusinessHours(hours: { enabled?: boolean; startTime?: string; endTime?: string }) {
-    const res = await fetch('/api/business-hours', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(hours)
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || '更新營業時間失敗');
-    return data.businessHours;
-  },
-
   async createOrder(data: { guestName: string; assignedStaffId: string; tableNo?: string; notes?: string }) {
     const res = await fetch('/api/orders', {
       method: 'POST',

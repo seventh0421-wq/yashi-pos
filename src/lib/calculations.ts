@@ -4,79 +4,8 @@ import {
   ReceptionOrder,
   TalentBonus,
   DaySettlementData,
-  StaffPayout,
-  BusinessHoursConfig
+  StaffPayout
 } from '../types';
-
-export const DEFAULT_BUSINESS_HOURS: BusinessHoursConfig = {
-  enabled: true,
-  startTime: '20:00',
-  endTime: '02:00'
-};
-
-export function isCurrentlyInBusinessHours(
-  config: BusinessHoursConfig = DEFAULT_BUSINESS_HOURS,
-  now: Date = new Date()
-): boolean {
-  if (!config || !config.enabled) return true;
-  const [startH, startM] = (config.startTime || '20:00').split(':').map(Number);
-  const [endH, endM] = (config.endTime || '02:00').split(':').map(Number);
-  const curMinutes = now.getHours() * 60 + now.getMinutes();
-  const startMin = startH * 60 + startM;
-  const endMin = endH * 60 + endM;
-
-  if (endMin > startMin) {
-    return curMinutes >= startMin && curMinutes < endMin;
-  } else if (endMin < startMin) {
-    // Crosses midnight, e.g. 20:00 to 02:00
-    return curMinutes >= startMin || curMinutes < endMin;
-  } else {
-    return true;
-  }
-}
-
-/**
- * Calculates effective work minutes strictly bounded to business hours.
- * If employee logs in outside business hours, time outside business hours is 0.
- * Only time strictly within the business hours window is counted as work minutes.
- */
-export function calculateAttendanceMinutes(
-  clockInIso: string,
-  clockOutIso: string | null,
-  _recordDate?: string,
-  config: BusinessHoursConfig = DEFAULT_BUSINESS_HOURS,
-  nowMs: number = Date.now()
-): number {
-  if (!clockInIso) return 0;
-  const startMs = new Date(clockInIso).getTime();
-  const endMs = clockOutIso ? new Date(clockOutIso).getTime() : nowMs;
-
-  if (endMs <= startMs) return 0;
-
-  if (!config || !config.enabled) {
-    return Math.max(0, Math.floor((endMs - startMs) / 60000));
-  }
-
-  const [startH, startM] = (config.startTime || '20:00').split(':').map(Number);
-  const [endH, endM] = (config.endTime || '02:00').split(':').map(Number);
-  const startMin = startH * 60 + startM;
-  const endMin = endH * 60 + endM;
-
-  let count = 0;
-  // Step through minutes in the work window
-  for (let t = startMs; t < endMs; t += 60000) {
-    const d = new Date(t);
-    const m = d.getHours() * 60 + d.getMinutes();
-    const inWindow = endMin > startMin 
-      ? (m >= startMin && m < endMin) 
-      : endMin < startMin
-      ? (m >= startMin || m < endMin)
-      : true;
-    if (inWindow) count++;
-  }
-
-  return count;
-}
 
 export function calculateDaySettlement(
   date: string,
@@ -86,8 +15,7 @@ export function calculateDaySettlement(
   bonuses: TalentBonus[],
   isSettled: boolean = false,
   settledAt?: string,
-  settledBy?: string,
-  businessHours: BusinessHoursConfig = DEFAULT_BUSINESS_HOURS
+  settledBy?: string
 ): DaySettlementData {
   // Only calculate orders for the given date (default entryTime starts with date, or all active if single day system)
   const dayOrders = orders.filter(o => o.entryTime.startsWith(date));
@@ -187,12 +115,14 @@ export function calculateDaySettlement(
     const att = dayAttendance.find(a => a.staffId === staff.id);
     let workMinutes = 0;
     if (att) {
-      workMinutes = calculateAttendanceMinutes(
-        att.clockInTime,
-        att.clockOutTime,
-        att.date,
-        businessHours
-      );
+      if (att.clockOutTime) {
+        workMinutes = att.minutesWorked;
+      } else if (att.clockInTime) {
+        // Still working: compute minutes from clock-in to now
+        const start = new Date(att.clockInTime).getTime();
+        const now = Date.now();
+        workMinutes = Math.max(0, Math.floor((now - start) / (1000 * 60)));
+      }
     }
 
     // Staff bonuses

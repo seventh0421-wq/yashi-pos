@@ -163,12 +163,6 @@ export interface DaySettlementData {
   payouts: StaffPayout[];
 }
 
-export interface BusinessHoursConfig {
-  enabled: boolean;
-  startTime: string; // HH:mm, e.g. "20:00"
-  endTime: string;   // HH:mm, e.g. "02:00"
-}
-
 export interface AppState {
   currentStaff: Staff | null;
   staffList: Staff[];
@@ -177,7 +171,6 @@ export interface AppState {
   orders: ReceptionOrder[];
   bonuses: TalentBonus[];
   settlement: DaySettlementData;
-  businessHours: BusinessHoursConfig;
   systemDate: string; // YYYY-MM-DD
   version: number;
 }

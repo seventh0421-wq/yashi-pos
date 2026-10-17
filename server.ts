@@ -9,10 +9,9 @@ import {
   MenuItem,
   ReceptionOrder,
   TalentBonus,
-  AppState,
-  BusinessHoursConfig
+  AppState
 } from './src/types';
-import { calculateDaySettlement, calculateAttendanceMinutes, DEFAULT_BUSINESS_HOURS } from './src/lib/calculations';
+import { calculateDaySettlement } from './src/lib/calculations';
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
@@ -374,16 +373,9 @@ function getInitialData(): AppState {
     }
   ];
 
-  const businessHours: BusinessHoursConfig = {
-    enabled: true,
-    startTime: '20:00',
-    endTime: '02:00'
-  };
-
   // Attendance: Let's give staff active clock-in for today so calculating works immediately
   const now = new Date();
   const twoHoursAgo = new Date(now.getTime() - 120 * 60 * 1000).toISOString();
-  const initialWorkMinutes = calculateAttendanceMinutes(twoHoursAgo, null, today, businessHours);
 
   const attendance: AttendanceRecord[] = [
     {
@@ -393,7 +385,7 @@ function getInitialData(): AppState {
       date: today,
       clockInTime: twoHoursAgo,
       clockOutTime: null,
-      minutesWorked: initialWorkMinutes,
+      minutesWorked: 120,
     },
     {
       id: 'att-2',
@@ -402,7 +394,7 @@ function getInitialData(): AppState {
       date: today,
       clockInTime: twoHoursAgo,
       clockOutTime: null,
-      minutesWorked: initialWorkMinutes,
+      minutesWorked: 120,
     },
     {
       id: 'att-3',
@@ -411,7 +403,7 @@ function getInitialData(): AppState {
       date: today,
       clockInTime: twoHoursAgo,
       clockOutTime: null,
-      minutesWorked: initialWorkMinutes,
+      minutesWorked: 120,
     },
     {
       id: 'att-4',
@@ -420,7 +412,7 @@ function getInitialData(): AppState {
       date: today,
       clockInTime: twoHoursAgo,
       clockOutTime: null,
-      minutesWorked: initialWorkMinutes,
+      minutesWorked: 120,
     },
     {
       id: 'att-5',
@@ -429,7 +421,7 @@ function getInitialData(): AppState {
       date: today,
       clockInTime: twoHoursAgo,
       clockOutTime: null,
-      minutesWorked: initialWorkMinutes,
+      minutesWorked: 120,
     }
   ];
 
@@ -570,7 +562,7 @@ function getInitialData(): AppState {
     }
   ];
 
-  const settlement = calculateDaySettlement(today, staffList, attendance, orders, bonuses, false, undefined, undefined, businessHours);
+  const settlement = calculateDaySettlement(today, staffList, attendance, orders, bonuses, false);
 
   return {
     currentStaff: null,
@@ -580,7 +572,6 @@ function getInitialData(): AppState {
     orders,
     bonuses,
     settlement,
-    businessHours,
     systemDate: today,
     version: 1
   };
@@ -599,27 +590,6 @@ function loadState() {
       state = JSON.parse(raw);
 
       const initial = getInitialData();
-      // Ensure businessHours config exists
-      if (!state.businessHours) {
-        state.businessHours = {
-          enabled: true,
-          startTime: '20:00',
-          endTime: '02:00'
-        };
-      }
-
-      // Re-evaluate active attendance records against business hours
-      for (const att of state.attendance) {
-        if (!att.clockOutTime) {
-          att.minutesWorked = calculateAttendanceMinutes(
-            att.clockInTime,
-            null,
-            att.date,
-            state.businessHours
-          );
-        }
-      }
-
       // Remove deleted staff: Sephir, Noelle, Lucas, Ash, Sylphie
       const deletedStaffIds = new Set(['staff-1', 'staff-3', 'staff-4', 'staff-5', 'staff-6']);
       state.staffList = state.staffList.filter(s => !deletedStaffIds.has(s.id));
@@ -678,18 +648,6 @@ function saveState() {
     if (!fs.existsSync(DATA_DIR)) {
       fs.mkdirSync(DATA_DIR, { recursive: true });
     }
-    const currentBusinessHours = state.businessHours || DEFAULT_BUSINESS_HOURS;
-    // Update active clock-ins minutesWorked strictly bounded to business hours
-    for (const att of state.attendance) {
-      if (!att.clockOutTime) {
-        att.minutesWorked = calculateAttendanceMinutes(
-          att.clockInTime,
-          null,
-          att.date,
-          currentBusinessHours
-        );
-      }
-    }
     // Recompute settlement dynamically on save
     state.settlement = calculateDaySettlement(
       state.systemDate || getTodayString(),
@@ -699,8 +657,7 @@ function saveState() {
       state.bonuses,
       state.settlement?.isSettled || false,
       state.settlement?.settledAt,
-      state.settlement?.settledBy,
-      currentBusinessHours
+      state.settlement?.settledBy
     );
     state.version = (state.version || 0) + 1;
     fs.writeFileSync(DATA_FILE, JSON.stringify(state, null, 2), 'utf-8');
@@ -714,18 +671,7 @@ loadState();
 // Express API Routes
 // 1. Get entire app state
 app.get('/api/state', (_req: Request, res: Response) => {
-  const currentBusinessHours = state.businessHours || DEFAULT_BUSINESS_HOURS;
-  // Update minutes for active clock-ins strictly bounded to business hours
-  for (const att of state.attendance) {
-    if (!att.clockOutTime) {
-      att.minutesWorked = calculateAttendanceMinutes(
-        att.clockInTime,
-        null,
-        att.date,
-        currentBusinessHours
-      );
-    }
-  }
+  // Update minutes for active clock-ins
   state.settlement = calculateDaySettlement(
     state.systemDate || getTodayString(),
     state.staffList,
@@ -734,8 +680,7 @@ app.get('/api/state', (_req: Request, res: Response) => {
     state.bonuses,
     state.settlement?.isSettled || false,
     state.settlement?.settledAt,
-    state.settlement?.settledBy,
-    currentBusinessHours
+    state.settlement?.settledBy
   );
   res.json(state);
 });
@@ -823,29 +768,12 @@ app.post('/api/attendance/clock-out', (req: Request, res: Response) => {
 
   const now = new Date();
   record.clockOutTime = now.toISOString();
-  record.minutesWorked = calculateAttendanceMinutes(
-    record.clockInTime,
-    record.clockOutTime,
-    record.date,
-    state.businessHours || DEFAULT_BUSINESS_HOURS
-  );
+  const start = new Date(record.clockInTime).getTime();
+  const diffMinutes = Math.max(1, Math.round((now.getTime() - start) / (1000 * 60)));
+  record.minutesWorked = diffMinutes;
 
   saveState();
   res.json({ success: true, record, attendance: state.attendance });
-});
-
-// 4.1 Business Hours: Update Operating Window (Manager)
-app.put('/api/business-hours', (req: Request, res: Response) => {
-  const { enabled, startTime, endTime } = req.body;
-  if (!state.businessHours) {
-    state.businessHours = { enabled: true, startTime: '20:00', endTime: '02:00' };
-  }
-  if (enabled !== undefined) state.businessHours.enabled = Boolean(enabled);
-  if (startTime) state.businessHours.startTime = startTime;
-  if (endTime) state.businessHours.endTime = endTime;
-
-  saveState();
-  res.json({ success: true, businessHours: state.businessHours });
 });
 
 // 5. Attendance: Manager Manual Edit
@@ -1193,8 +1121,7 @@ app.post('/api/settlement/close', (req: Request, res: Response) => {
     state.bonuses,
     true,
     new Date().toISOString(),
-    settledBy || '店長 萊可',
-    state.businessHours || DEFAULT_BUSINESS_HOURS
+    settledBy || '店長 賽菲兒'
   );
 
   // Lock all orders for today
