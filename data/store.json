@@ -1,0 +1,586 @@
+{
+  "currentStaff": null,
+  "staffList": [
+    {
+      "id": "staff-2",
+      "name": "萊可 (Lyco)",
+      "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=Lyco",
+      "username": "lyco",
+      "role": "manager",
+      "roleTitle": "總管店長",
+      "isActive": true,
+      "passwordHash": "14615a26d92dc44a96a672c7171f6e72f555fbb550108307613b8120ed23010f"
+    },
+    {
+      "id": "staff-7",
+      "name": "璐可 (Luco)",
+      "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=Luco",
+      "username": "luco",
+      "role": "maid",
+      "roleTitle": "女僕侍從",
+      "isActive": true
+    },
+    {
+      "id": "staff-8",
+      "name": "栗栗皆辛苦 (Lili)",
+      "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=Lili",
+      "username": "lili",
+      "role": "maid",
+      "roleTitle": "女僕侍從",
+      "isActive": true
+    },
+    {
+      "id": "staff-9",
+      "name": "胖冬瓜 (Melon)",
+      "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=Melon",
+      "username": "melon",
+      "role": "butler",
+      "roleTitle": "執事侍從",
+      "isActive": true
+    },
+    {
+      "id": "staff-10",
+      "name": "薯泥勇者 (Potato)",
+      "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=Potato",
+      "username": "potato",
+      "role": "butler",
+      "roleTitle": "執事侍從",
+      "isActive": true
+    },
+    {
+      "id": "staff-11",
+      "name": "陰濕男鬼 (Ghost)",
+      "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=Ghost",
+      "username": "ghost",
+      "role": "butler",
+      "roleTitle": "執事侍從",
+      "isActive": true
+    },
+    {
+      "id": "staff-12",
+      "name": "翹屁嫩兔 (Bunny)",
+      "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=Bunny",
+      "username": "bunny",
+      "role": "maid",
+      "roleTitle": "女僕侍從",
+      "isActive": true
+    },
+    {
+      "id": "staff-13",
+      "name": "花嶋威 (Takeshi)",
+      "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=Takeshi",
+      "username": "takeshi",
+      "role": "butler",
+      "roleTitle": "執事侍從",
+      "isActive": true
+    }
+  ],
+  "attendance": [
+    {
+      "id": "att-2",
+      "staffId": "staff-2",
+      "staffName": "萊可 (Lyco)",
+      "date": "2026-10-11",
+      "clockInTime": "2026-10-11T07:10:10.265Z",
+      "clockOutTime": null,
+      "minutesWorked": 120
+    }
+  ],
+  "menu": [
+    {
+      "id": "menu-1",
+      "name": "無花果沙拉",
+      "category": "dessert_salad",
+      "price": 10000,
+      "cost": 300,
+      "poolShare": 0,
+      "isAvailable": true,
+      "description": "鮮採野生無花果搭配特製甜醋醬，清甜爽口。",
+      "ruleNote": "食物利潤 9,700 Gil 全數計入薪資池"
+    },
+    {
+      "id": "menu-2",
+      "name": "番茄沙拉",
+      "category": "dessert_salad",
+      "price": 10000,
+      "cost": 300,
+      "poolShare": 0,
+      "isAvailable": true,
+      "description": "多汁紅熟番茄佐羅勒香草油，開胃首選。",
+      "ruleNote": "食物利潤 9,700 Gil 全數計入薪資池"
+    },
+    {
+      "id": "menu-3",
+      "name": "元氣蛋包飯",
+      "category": "main",
+      "price": 20000,
+      "cost": 400,
+      "poolShare": 0,
+      "isAvailable": true,
+      "description": "滑嫩蛋皮裹金黃炒飯，可由當席侍從施加美味魔法番茄醬畫圖。",
+      "ruleNote": "食物利潤 19,600 Gil 全數計入薪資池"
+    },
+    {
+      "id": "menu-4",
+      "name": "雞肉奶油麵",
+      "category": "main",
+      "price": 20000,
+      "cost": 500,
+      "poolShare": 0,
+      "isAvailable": true,
+      "description": "慢燉香嫩雞肉搭配濃郁乳酪白醬，洋館經典溫熱主食。",
+      "ruleNote": "食物利潤 19,500 Gil 全數計入薪資池"
+    },
+    {
+      "id": "menu-5",
+      "name": "魚子醬三明治",
+      "category": "main",
+      "price": 20000,
+      "cost": 500,
+      "poolShare": 0,
+      "isAvailable": true,
+      "description": "高級黑魚子醬搭配酥烤吐司與蒔蘿酸奶油，精緻貴族風味。",
+      "ruleNote": "食物利潤 19,500 Gil 全數計入薪資池"
+    },
+    {
+      "id": "menu-6",
+      "name": "巧克力奶油蛋糕",
+      "category": "dessert_salad",
+      "price": 20000,
+      "cost": 500,
+      "poolShare": 0,
+      "isAvailable": true,
+      "description": "微苦醇厚可可淋醬與戚風海綿蛋糕的優雅相遇。",
+      "ruleNote": "食物利潤 19,500 Gil 全數計入薪資池"
+    },
+    {
+      "id": "menu-7",
+      "name": "無花果餅乾",
+      "category": "dessert_salad",
+      "price": 20000,
+      "cost": 400,
+      "poolShare": 0,
+      "isAvailable": true,
+      "description": "香脆手工烘焙餅乾，揉合無花果果乾與焦糖香氣。",
+      "ruleNote": "食物利潤 19,600 Gil 全數計入薪資池"
+    },
+    {
+      "id": "menu-8",
+      "name": "蜜瓜果汁",
+      "category": "drink",
+      "price": 10000,
+      "cost": 600,
+      "poolShare": 0,
+      "isAvailable": true,
+      "description": "冰鎮鮮榨綠蜜瓜原汁，色澤如翡翠般晶瑩。",
+      "ruleNote": "食物利潤 9,400 Gil 全數計入薪資池"
+    },
+    {
+      "id": "menu-9",
+      "name": "高山茶",
+      "category": "drink",
+      "price": 10000,
+      "cost": 300,
+      "poolShare": 0,
+      "isAvailable": true,
+      "description": "源自遠方雪峰採摘烘焙，茶韻澄澈回甘。",
+      "ruleNote": "食物利潤 9,700 Gil 全數計入薪資池"
+    },
+    {
+      "id": "menu-10",
+      "name": "馬薩拉奶茶",
+      "category": "drink",
+      "price": 10000,
+      "cost": 250,
+      "poolShare": 0,
+      "isAvailable": true,
+      "description": "近東肉桂與小荳蔻香料，濃純鮮奶文火現煮。",
+      "ruleNote": "食物利潤 9,750 Gil 全數計入薪資池"
+    },
+    {
+      "id": "menu-11",
+      "name": "抹茶",
+      "category": "drink",
+      "price": 10000,
+      "cost": 250,
+      "poolShare": 0,
+      "isAvailable": true,
+      "description": "東方石磨特撰玉露抹茶，現刷翠綠茶沫。",
+      "ruleNote": "食物利潤 9,750 Gil 全數計入薪資池"
+    },
+    {
+      "id": "menu-12",
+      "name": "炸紅白湯圓",
+      "category": "dessert_salad",
+      "price": 20000,
+      "cost": 400,
+      "poolShare": 0,
+      "isAvailable": true,
+      "description": "外酥內軟滾上香甜花生糖粉，象徵圓滿喜氣。",
+      "ruleNote": "食物利潤 19,600 Gil 全數計入薪資池"
+    },
+    {
+      "id": "menu-13",
+      "name": "夜香花套餐",
+      "category": "set",
+      "price": 60000,
+      "cost": 1700,
+      "poolShare": 0,
+      "isAvailable": true,
+      "description": "夜蒔館招牌宴席：沙拉、主餐、甜點、飲品各一項組合。",
+      "ruleNote": "由當日庫存最多的沙拉、主餐、甜點、飲品各一項組成；固定以 1,700 Gil 成本計算，利潤 58,300 Gil"
+    },
+    {
+      "id": "menu-spec-1",
+      "name": "開心汁",
+      "category": "specialty",
+      "price": 50000,
+      "cost": 0,
+      "poolShare": 10000,
+      "recommendedStaffId": "staff-2",
+      "recommendedStaffName": "萊可",
+      "isAvailable": true,
+      "description": "特選香甜果實與氣泡調和，萊可精心推薦的歡樂魔法特調。",
+      "ruleNote": "不套用食物淨利，固定計入薪資池 10,000 Gil／份"
+    },
+    {
+      "id": "menu-spec-2",
+      "name": "無花果凍糕",
+      "category": "specialty",
+      "price": 50000,
+      "cost": 0,
+      "poolShare": 10000,
+      "recommendedStaffId": "staff-7",
+      "recommendedStaffName": "璐可",
+      "isAvailable": true,
+      "description": "晶瑩剔透冰涼凍糕凝萃無花果甜香，璐可真心推薦的午後甜品。",
+      "ruleNote": "不套用食物淨利，固定計入薪資池 10,000 Gil／份"
+    },
+    {
+      "id": "menu-spec-3",
+      "name": "瑪黛茶餅乾",
+      "category": "specialty",
+      "price": 50000,
+      "cost": 0,
+      "poolShare": 10000,
+      "recommendedStaffId": "staff-8",
+      "recommendedStaffName": "栗栗皆辛苦",
+      "isAvailable": true,
+      "description": "手工揉製酥脆餅乾融揉瑪黛茶清香，栗栗皆辛苦用心烘焙的招牌茶點。",
+      "ruleNote": "不套用食物淨利，固定計入薪資池 10,000 Gil／份"
+    },
+    {
+      "id": "menu-spec-4",
+      "name": "鮮紅羅蘭莓派",
+      "category": "specialty",
+      "price": 50000,
+      "cost": 0,
+      "poolShare": 10000,
+      "recommendedStaffId": "staff-9",
+      "recommendedStaffName": "胖冬瓜",
+      "isAvailable": true,
+      "description": "滿溢酸甜濃郁羅蘭莓果醬，胖冬瓜真摯推薦的經典烘烤莓果派。",
+      "ruleNote": "不套用食物淨利，固定計入薪資池 10,000 Gil／份"
+    },
+    {
+      "id": "menu-spec-5",
+      "name": "蜂蜜瑪芬",
+      "category": "specialty",
+      "price": 50000,
+      "cost": 0,
+      "poolShare": 10000,
+      "recommendedStaffId": "staff-10",
+      "recommendedStaffName": "薯泥勇者",
+      "isAvailable": true,
+      "description": "剛出爐綿密溫熱瑪芬蛋糕淋上醇香野蜂蜜，薯泥勇者強力推薦。",
+      "ruleNote": "不套用食物淨利，固定計入薪資池 10,000 Gil／份"
+    },
+    {
+      "id": "menu-spec-6",
+      "name": "南瓜濃湯",
+      "category": "specialty",
+      "price": 50000,
+      "cost": 0,
+      "poolShare": 10000,
+      "recommendedStaffId": "staff-11",
+      "recommendedStaffName": "陰濕男鬼",
+      "isAvailable": true,
+      "description": "香濃滑順金黃熟成南瓜慢火熬煮，陰濕男鬼誠意奉上的暖胃精選。",
+      "ruleNote": "不套用食物淨利，固定計入薪資池 10,000 Gil／份"
+    },
+    {
+      "id": "menu-spec-7",
+      "name": "章魚燒",
+      "category": "specialty",
+      "price": 50000,
+      "cost": 0,
+      "poolShare": 10000,
+      "recommendedStaffId": "staff-12",
+      "recommendedStaffName": "翹屁嫩兔",
+      "isAvailable": true,
+      "description": "外皮金黃酥脆內裹鮮彈章魚切塊，翹屁嫩兔熱情推薦的洋館特別小食。",
+      "ruleNote": "不套用食物淨利，固定計入薪資池 10,000 Gil／份"
+    },
+    {
+      "id": "menu-spec-8",
+      "name": "仙子莓茶",
+      "category": "specialty",
+      "price": 50000,
+      "cost": 0,
+      "poolShare": 10000,
+      "recommendedStaffId": "staff-13",
+      "recommendedStaffName": "花嶋威",
+      "isAvailable": true,
+      "description": "精選仙子鄉特產仙子莓果與紅茶葉沖泡，花嶋威優雅推薦的芬芳茶飲。",
+      "ruleNote": "不套用食物淨利，固定計入薪資池 10,000 Gil／份"
+    }
+  ],
+  "orders": [
+    {
+      "id": "ord-1",
+      "orderNumber": "YS-20261011-01",
+      "guestName": "愛蜜莉雅 大小姐",
+      "assignedStaffId": "staff-2",
+      "assignedStaffName": "萊可 (Lyco)",
+      "tableNo": "薔薇廳 01",
+      "entryTime": "2026-10-11T07:40:10.265Z",
+      "status": "active",
+      "items": [
+        {
+          "id": "oi-1",
+          "menuItemId": "menu-13",
+          "name": "夜香花套餐",
+          "category": "set",
+          "unitPrice": 60000,
+          "cost": 1700,
+          "poolShare": 0,
+          "quantity": 1,
+          "note": "搭配抹茶、蛋包飯與番茄沙拉"
+        },
+        {
+          "id": "oi-1791710230580-1lxt",
+          "menuItemId": "menu-spec-7",
+          "name": "章魚燒",
+          "category": "specialty",
+          "unitPrice": 50000,
+          "cost": 0,
+          "poolShare": 10000,
+          "quantity": 1,
+          "recommendedStaffId": "staff-12",
+          "recommendedStaffName": "翹屁嫩兔"
+        }
+      ],
+      "services": [
+        {
+          "id": "srv-1",
+          "serviceType": "chat",
+          "name": "指名聊天",
+          "staffId": "staff-2",
+          "staffName": "萊可 (Lyco)",
+          "price": 200000,
+          "poolShare": 60000,
+          "status": "pending",
+          "sessions": 1,
+          "note": "交流冒險者旅途見聞"
+        }
+      ],
+      "tip": {
+        "amount": 20000,
+        "type": "designated",
+        "designatedStaffId": "staff-2",
+        "designatedStaffName": "萊可 (Lyco)"
+      },
+      "foodSubtotal": 110000,
+      "servicesSubtotal": 200000,
+      "totalAmount": 330000,
+      "foodProfit": 58300,
+      "poolContribution": 128300,
+      "notes": "首次光臨夜蒔館，喜好清淡香草茶",
+      "isLocked": false
+    },
+    {
+      "id": "ord-2",
+      "orderNumber": "YS-20261011-02",
+      "guestName": "阿爾芬 主人",
+      "assignedStaffId": "staff-2",
+      "assignedStaffName": "萊可 (Lyco)",
+      "tableNo": "水晶廊 02",
+      "entryTime": "2026-10-11T08:10:10.265Z",
+      "status": "pending_service",
+      "items": [
+        {
+          "id": "oi-3",
+          "menuItemId": "menu-4",
+          "name": "雞肉奶油麵",
+          "category": "main",
+          "unitPrice": 20000,
+          "cost": 500,
+          "poolShare": 0,
+          "quantity": 2
+        },
+        {
+          "id": "oi-4",
+          "menuItemId": "menu-10",
+          "name": "馬薩拉奶茶",
+          "category": "drink",
+          "unitPrice": 10000,
+          "cost": 250,
+          "poolShare": 0,
+          "quantity": 2
+        }
+      ],
+      "services": [
+        {
+          "id": "srv-2",
+          "serviceType": "sketch",
+          "name": "簽繪",
+          "staffId": "staff-2",
+          "staffName": "萊可 (Lyco)",
+          "price": 200000,
+          "poolShare": 20000,
+          "status": "pending",
+          "note": "希望畫一隻戴女僕髮箍的小肥仙仙"
+        }
+      ],
+      "tip": {
+        "amount": 10000,
+        "type": "shared"
+      },
+      "foodSubtotal": 60000,
+      "servicesSubtotal": 200000,
+      "totalAmount": 270000,
+      "foodProfit": 58500,
+      "poolContribution": 78500,
+      "notes": "常客，偏好安靜角落",
+      "isLocked": false
+    }
+  ],
+  "bonuses": [
+    {
+      "id": "bon-1",
+      "staffId": "staff-4",
+      "staffName": "盧卡斯 (Lucas)",
+      "title": "大廳古典豎琴演奏加成",
+      "weightMinutes": 30,
+      "date": "2026-10-11",
+      "recordedBy": "賽菲兒 (Sephir)",
+      "createdAt": "2026-10-11T09:10:10.266Z"
+    }
+  ],
+  "settlement": {
+    "date": "2026-10-11",
+    "isSettled": false,
+    "totalRevenue": 600000,
+    "foodRevenue": 170000,
+    "foodCost": 3200,
+    "foodProfit": 116800,
+    "specialtyCount": 1,
+    "specialtyPool": 10000,
+    "chatSessions": 1,
+    "chatPool": 60000,
+    "sketchCount": 1,
+    "sketchPool": 20000,
+    "photoCount": 0,
+    "photoPool": 0,
+    "totalPool": 206800,
+    "totalStaffMinutes": 133,
+    "totalBonusWeight": 0,
+    "totalShopWeight": 133,
+    "valuePerWeight": 1554.8872180451128,
+    "tipsTotal": 30000,
+    "tipsShared": 10000,
+    "tipsDesignated": 20000,
+    "payouts": [
+      {
+        "staffId": "staff-2",
+        "staffName": "萊可 (Lyco)",
+        "role": "manager",
+        "workMinutes": 133,
+        "bonusWeight": 0,
+        "totalWeight": 133,
+        "estimatedSalary": 206800,
+        "designatedTips": 20000,
+        "totalIncome": 226800
+      },
+      {
+        "staffId": "staff-7",
+        "staffName": "璐可 (Luco)",
+        "role": "maid",
+        "workMinutes": 0,
+        "bonusWeight": 0,
+        "totalWeight": 0,
+        "estimatedSalary": 0,
+        "designatedTips": 0,
+        "totalIncome": 0
+      },
+      {
+        "staffId": "staff-8",
+        "staffName": "栗栗皆辛苦 (Lili)",
+        "role": "maid",
+        "workMinutes": 0,
+        "bonusWeight": 0,
+        "totalWeight": 0,
+        "estimatedSalary": 0,
+        "designatedTips": 0,
+        "totalIncome": 0
+      },
+      {
+        "staffId": "staff-9",
+        "staffName": "胖冬瓜 (Melon)",
+        "role": "butler",
+        "workMinutes": 0,
+        "bonusWeight": 0,
+        "totalWeight": 0,
+        "estimatedSalary": 0,
+        "designatedTips": 0,
+        "totalIncome": 0
+      },
+      {
+        "staffId": "staff-10",
+        "staffName": "薯泥勇者 (Potato)",
+        "role": "butler",
+        "workMinutes": 0,
+        "bonusWeight": 0,
+        "totalWeight": 0,
+        "estimatedSalary": 0,
+        "designatedTips": 0,
+        "totalIncome": 0
+      },
+      {
+        "staffId": "staff-11",
+        "staffName": "陰濕男鬼 (Ghost)",
+        "role": "butler",
+        "workMinutes": 0,
+        "bonusWeight": 0,
+        "totalWeight": 0,
+        "estimatedSalary": 0,
+        "designatedTips": 0,
+        "totalIncome": 0
+      },
+      {
+        "staffId": "staff-12",
+        "staffName": "翹屁嫩兔 (Bunny)",
+        "role": "maid",
+        "workMinutes": 0,
+        "bonusWeight": 0,
+        "totalWeight": 0,
+        "estimatedSalary": 0,
+        "designatedTips": 0,
+        "totalIncome": 0
+      },
+      {
+        "staffId": "staff-13",
+        "staffName": "花嶋威 (Takeshi)",
+        "role": "butler",
+        "workMinutes": 0,
+        "bonusWeight": 0,
+        "totalWeight": 0,
+        "estimatedSalary": 0,
+        "designatedTips": 0,
+        "totalIncome": 0
+      }
+    ]
+  },
+  "systemDate": "2026-10-11",
+  "version": 8
+}

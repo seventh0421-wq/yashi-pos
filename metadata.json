@@ -1,0 +1,6 @@
+{
+  "name": "夜蒔館 YASHI MANOR · STAFF POS",
+  "description": "專為 FF14 RP 女僕／執事咖啡廳打造之接待、點餐、特殊服務、出勤、營業紀錄與薪資結算 POS 系統。",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
