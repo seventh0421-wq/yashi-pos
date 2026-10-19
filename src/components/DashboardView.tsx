@@ -4,9 +4,11 @@ import {
   Staff, 
   AttendanceRecord, 
   ReceptionStatus, 
-  SpecialServiceEntry 
+  SpecialServiceEntry,
+  BusinessHoursConfig
 } from '../types';
 import { formatGil, formatTime } from '../lib/format';
+import { calculateEffectiveWorkMinutes } from '../lib/calculations';
 import { 
   Users, 
   CheckCircle2, 
@@ -28,6 +30,7 @@ interface DashboardViewProps {
   onOpenNewReception: () => void;
   onSelectOrder: (order: ReceptionOrder) => void;
   onOpenLogin?: () => void;
+  businessHours?: BusinessHoursConfig;
 }
 
 export function DashboardView({
@@ -38,18 +41,22 @@ export function DashboardView({
   onOpenNewReception,
   onSelectOrder,
   onOpenLogin,
+  businessHours,
 }: DashboardViewProps) {
   const [statusFilter, setStatusFilter] = useState<ReceptionStatus | 'all'>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Calculate live work minutes
+  // Calculate live work minutes within business hours
   const isWorking = currentAttendance && !currentAttendance.clockOutTime;
-  const workMinutes = useMemo(() => {
-    if (!currentAttendance) return 0;
-    if (currentAttendance.clockOutTime) return currentAttendance.minutesWorked;
-    const start = new Date(currentAttendance.clockInTime).getTime();
-    return Math.max(0, Math.floor((Date.now() - start) / (1000 * 60)));
-  }, [currentAttendance]);
+  const liveEffective = useMemo(() => {
+    if (!currentAttendance) return { effectiveMinutes: 0, isOutsideBusinessHours: false };
+    if (currentAttendance.clockOutTime) {
+      return { effectiveMinutes: currentAttendance.minutesWorked, isOutsideBusinessHours: false };
+    }
+    return calculateEffectiveWorkMinutes(currentAttendance, businessHours, new Date());
+  }, [currentAttendance, businessHours]);
+
+  const workMinutes = liveEffective.effectiveMinutes;
 
   // Overall Statistics for today
   const activeOrders = orders.filter(o => o.status !== 'settled');
@@ -127,6 +134,11 @@ export function DashboardView({
                 <span className="flex items-center gap-1">
                   <Clock className="w-3.5 h-3.5 text-[#5B88B4]" />
                   今日已工作：<strong className="font-mono text-slate-800">{workMinutes} 分鐘</strong>
+                  {isWorking && liveEffective.isOutsideBusinessHours && (
+                    <span className="text-[10px] text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.2 rounded font-medium">
+                      營業外暫停計時
+                    </span>
+                  )}
                 </span>
               </div>
             </div>

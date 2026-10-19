@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { AppState, Staff, ReceptionOrder, MenuItem } from './types';
+import { AppState, Staff, ReceptionOrder, MenuItem, BusinessHoursConfig } from './types';
 import { api } from './lib/api';
 import { Navbar } from './components/Navbar';
 import { DashboardView } from './components/DashboardView';
@@ -11,13 +11,15 @@ import { SettlementView } from './components/SettlementView';
 import { AdminView } from './components/AdminView';
 import { ReceptionModal } from './components/ReceptionModal';
 import { LoginModal } from './components/LoginModal';
+import { StaffLoginScreen } from './components/StaffLoginScreen';
 import { YashiEmblem } from './components/YashiEmblem';
 import { Check, AlertCircle } from 'lucide-react';
 
 export default function App() {
   const [appState, setAppState] = useState<AppState | null>(null);
-  const [currentStaffId, setCurrentStaffId] = useState<string>(() => {
-    return localStorage.getItem('yashi_current_staff_id') || 'staff-1';
+  // Enforce login first when entering the site: only persist in active sessionStorage
+  const [currentStaffId, setCurrentStaffId] = useState<string | null>(() => {
+    return sessionStorage.getItem('yashi_current_staff_id') || null;
   });
   const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
@@ -37,16 +39,20 @@ export default function App() {
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  // Derive currentStaff reliably from appState and currentStaffId
+  // Derive currentStaff reliably from appState and currentStaffId (must be strictly authenticated)
   const currentStaff = useMemo(() => {
-    if (!appState || !appState.staffList || appState.staffList.length === 0) return null;
-    return appState.staffList.find(s => s.id === currentStaffId && s.isActive) || appState.staffList[0] || null;
+    if (!appState || !appState.staffList || appState.staffList.length === 0 || !currentStaffId) return null;
+    return appState.staffList.find(s => s.id === currentStaffId && s.isActive) || null;
   }, [appState, currentStaffId]);
 
-  // Keep localStorage in sync with currentStaffId
+  // Keep sessionStorage in sync with currentStaffId
   useEffect(() => {
     if (currentStaffId) {
+      sessionStorage.setItem('yashi_current_staff_id', currentStaffId);
       localStorage.setItem('yashi_current_staff_id', currentStaffId);
+    } else {
+      sessionStorage.removeItem('yashi_current_staff_id');
+      localStorage.removeItem('yashi_current_staff_id');
     }
   }, [currentStaffId]);
 
@@ -76,10 +82,16 @@ export default function App() {
   }, [fetchState]);
 
   // Auth: Login / Switch Staff
-  const handleSelectStaff = async (username?: string, password?: string, staffId?: string) => {
+  const handleSelectStaff = async (
+    username?: string, 
+    password?: string, 
+    staffId?: string, 
+    newPassword?: string
+  ) => {
     try {
-      const res = await api.login(username, password, staffId);
+      const res = await api.login(username, password, staffId, newPassword);
       setCurrentStaffId(res.staff.id);
+      sessionStorage.setItem('yashi_current_staff_id', res.staff.id);
       localStorage.setItem('yashi_current_staff_id', res.staff.id);
       
       // If switching to non-manager while on admin tab, switch to dashboard
@@ -87,19 +99,36 @@ export default function App() {
         setActiveTab('dashboard');
       }
       
-      showToast(`已成功切換侍從：${res.staff.name} (${res.staff.roleTitle})`);
+      if (newPassword || res.isFirstLogin) {
+        showToast(`🎉 歡迎！密碼已設定成功，已登入：${res.staff.name} (${res.staff.roleTitle})`);
+      } else {
+        showToast(`已成功登入：${res.staff.name} (${res.staff.roleTitle})`);
+      }
+      setShowLoginModal(false);
       await fetchState(false);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : '切換店員失敗';
+      const msg = err instanceof Error ? err.message : '登入失敗';
       showToast(msg);
       throw err;
     }
   };
 
   const handleLogout = () => {
+    sessionStorage.removeItem('yashi_current_staff_id');
     localStorage.removeItem('yashi_current_staff_id');
+    setCurrentStaffId(null);
+    setShowLoginModal(false);
     showToast('已登出侍從帳號');
-    setShowLoginModal(true);
+  };
+
+  const handleResetStaffPassword = async (staffId: string) => {
+    try {
+      const res = await api.resetStaffPassword(staffId);
+      showToast(res.message || '已將員工重設為首次登入狀態');
+      await fetchState(false);
+    } catch (err: unknown) {
+      showToast(err instanceof Error ? err.message : '重設密碼失敗');
+    }
   };
 
   // Attendance: Clock In & Clock Out
@@ -156,7 +185,7 @@ export default function App() {
 
   const handleCheckoutOrder = async (orderId: string) => {
     const checked = await api.checkoutOrder(orderId);
-    showToast(`貴賓 ${checked.guestName} 已完成結帳並同步發送通知至 Discord！`);
+    showToast(`貴賓 ${checked.guestName} 已完成結帳！`);
     await fetchState(false);
   };
 
@@ -231,6 +260,12 @@ export default function App() {
     await fetchState(false);
   };
 
+  const handleUpdateBusinessHours = async (updates: Partial<BusinessHoursConfig>) => {
+    await api.updateBusinessHours(updates);
+    showToast('已更新夜蒔館營業時段與工時規則');
+    await fetchState(false);
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#F8F6F1] flex flex-col items-center justify-center text-slate-600 space-y-4">
@@ -258,10 +293,28 @@ export default function App() {
     );
   }
 
+  // First entrance barrier: if staff is not logged in, enforce staff login first
+  if (!currentStaff) {
+    return (
+      <div className="min-h-screen bg-[#F8F6F1] flex flex-col justify-center items-center p-4">
+        <StaffLoginScreen
+          staffList={appState.staffList}
+          onLogin={handleSelectStaff}
+          isModal={false}
+        />
+        {/* Floating Toast Notification */}
+        {toastMessage && (
+          <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-2.5 bg-white/95 border border-[#BFD7EE] text-slate-800 rounded-xl shadow-lg backdrop-blur-md text-xs font-medium animate-in slide-in-from-bottom-3 duration-200">
+            <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+            <span>{toastMessage}</span>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   // Find attendance record for current staff
-  const currentAttendance = currentStaff 
-    ? appState.attendance.find(a => a.staffId === currentStaff.id)
-    : undefined;
+  const currentAttendance = appState.attendance.find(a => a.staffId === currentStaff.id);
 
   const selectedOrder = selectedOrderId 
     ? appState.orders.find(o => o.id === selectedOrderId) 
@@ -287,6 +340,7 @@ export default function App() {
         onOpenLogin={() => setShowLoginModal(true)}
         isClocking={isClocking}
         unsettledOrdersCount={unsettledOrdersCount}
+        businessHours={appState.businessHours}
       />
 
       {/* Main Content Area */}
@@ -315,6 +369,7 @@ export default function App() {
                 onOpenNewReception={() => setShowReceptionModal(true)}
                 onSelectOrder={o => setSelectedOrderId(o.id)}
                 onOpenLogin={() => setShowLoginModal(true)}
+                businessHours={appState.businessHours}
               />
             )}
 
@@ -327,6 +382,7 @@ export default function App() {
                 onClockOut={handleClockOut}
                 onUpdateAttendance={handleUpdateAttendance}
                 isClocking={isClocking}
+                businessHours={appState.businessHours}
               />
             )}
 
@@ -373,6 +429,8 @@ export default function App() {
                 onUpdateStaff={handleUpdateStaff}
                 onImportBackup={handleImportBackup}
                 onResetBackup={handleResetBackup}
+                onUpdateBusinessHours={handleUpdateBusinessHours}
+                onResetStaffPassword={handleResetStaffPassword}
               />
             )}
           </>

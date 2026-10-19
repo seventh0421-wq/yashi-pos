@@ -9,9 +9,14 @@ import {
   MenuItem,
   ReceptionOrder,
   TalentBonus,
-  AppState
+  AppState,
+  BusinessHoursConfig
 } from './src/types';
-import { calculateDaySettlement } from './src/lib/calculations';
+import { 
+  calculateDaySettlement,
+  calculateEffectiveWorkMinutes,
+  isCurrentlyBusinessHours
+} from './src/lib/calculations';
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
@@ -562,7 +567,16 @@ function getInitialData(): AppState {
     }
   ];
 
-  const settlement = calculateDaySettlement(today, staffList, attendance, orders, bonuses, false);
+  const defaultBusinessHours: BusinessHoursConfig = {
+    enabled: true,
+    startTime: '20:00',
+    endTime: '00:00',
+    crossMidnight: false,
+    statusOverride: 'auto',
+    autoClockInOnLogin: true
+  };
+
+  const settlement = calculateDaySettlement(today, staffList, attendance, orders, bonuses, false, undefined, undefined, defaultBusinessHours);
 
   return {
     currentStaff: null,
@@ -573,7 +587,8 @@ function getInitialData(): AppState {
     bonuses,
     settlement,
     systemDate: today,
-    version: 1
+    version: 1,
+    businessHours: defaultBusinessHours
   };
 }
 
@@ -588,6 +603,17 @@ function loadState() {
     if (fs.existsSync(DATA_FILE)) {
       const raw = fs.readFileSync(DATA_FILE, 'utf-8');
       state = JSON.parse(raw);
+
+      if (!state.businessHours) {
+        state.businessHours = {
+          enabled: true,
+          startTime: '20:00',
+          endTime: '00:00',
+          crossMidnight: false,
+          statusOverride: 'auto',
+          autoClockInOnLogin: true
+        };
+      }
 
       const initial = getInitialData();
       // Remove deleted staff: Sephir, Noelle, Lucas, Ash, Sylphie
@@ -605,6 +631,13 @@ function loadState() {
       for (const st of initial.staffList) {
         if (!state.staffList.some(s => s.id === st.id)) {
           state.staffList.push(st);
+        }
+      }
+
+      // Initialize hasSetPassword flag on all staff (default to false for first-time setup)
+      for (const st of state.staffList) {
+        if (st.hasSetPassword === undefined) {
+          st.hasSetPassword = false;
         }
       }
 
@@ -648,7 +681,7 @@ function saveState() {
     if (!fs.existsSync(DATA_DIR)) {
       fs.mkdirSync(DATA_DIR, { recursive: true });
     }
-    // Recompute settlement dynamically on save
+    // Recompute settlement dynamically on save with businessHours
     state.settlement = calculateDaySettlement(
       state.systemDate || getTodayString(),
       state.staffList,
@@ -657,7 +690,8 @@ function saveState() {
       state.bonuses,
       state.settlement?.isSettled || false,
       state.settlement?.settledAt,
-      state.settlement?.settledBy
+      state.settlement?.settledBy,
+      state.businessHours
     );
     state.version = (state.version || 0) + 1;
     fs.writeFileSync(DATA_FILE, JSON.stringify(state, null, 2), 'utf-8');
@@ -680,14 +714,15 @@ app.get('/api/state', (_req: Request, res: Response) => {
     state.bonuses,
     state.settlement?.isSettled || false,
     state.settlement?.settledAt,
-    state.settlement?.settledBy
+    state.settlement?.settledBy,
+    state.businessHours
   );
   res.json(state);
 });
 
-// 2. Auth login: supports username + password OR quick switch by staffId
+// 2. Auth login: supports password verification OR first-time password setup
 app.post('/api/auth/login', (req: Request, res: Response) => {
-  const { username, password, staffId } = req.body;
+  const { username, password, staffId, newPassword } = req.body;
 
   let staff: Staff | undefined;
   if (staffId) {
@@ -702,11 +737,56 @@ app.post('/api/auth/login', (req: Request, res: Response) => {
     return res.status(401).json({ error: '帳號不存在或已被停用' });
   }
 
-  // If password provided and not direct staffId switch, verify hash
-  if (!staffId && password) {
+  const isFirstTime = !staff.hasSetPassword;
+
+  if (isFirstTime) {
+    // Staff is logging in for the first time: MUST provide newPassword
+    if (!newPassword || typeof newPassword !== 'string' || newPassword.trim().length < 2) {
+      return res.status(400).json({ 
+        error: '首次登入請自訂專屬密碼（至少 2 個字元）',
+        needsPasswordSetup: true,
+        staff: {
+          id: staff.id,
+          name: staff.name,
+          username: staff.username,
+          avatar: staff.avatar,
+          role: staff.role,
+          roleTitle: staff.roleTitle,
+          isActive: staff.isActive,
+          hasSetPassword: false
+        }
+      });
+    }
+
+    staff.passwordHash = hashPassword(newPassword.trim());
+    staff.hasSetPassword = true;
+    saveState();
+  } else {
+    // Returning staff: must provide and verify password
+    if (!password) {
+      return res.status(401).json({ error: '請輸入登入密碼' });
+    }
     const hash = hashPassword(password);
     if (staff.passwordHash && staff.passwordHash !== hash && password !== 'yashi123') {
-      return res.status(401).json({ error: '密碼錯誤' });
+      return res.status(401).json({ error: '密碼錯誤，請確認後重新輸入' });
+    }
+  }
+
+  // Auto clock-in on login if enabled
+  if (state.businessHours?.autoClockInOnLogin) {
+    const today = state.systemDate || getTodayString();
+    const existing = state.attendance.find(a => a.staffId === staff.id && a.date === today);
+    if (!existing) {
+      state.attendance.push({
+        id: `att-${Date.now()}`,
+        staffId: staff.id,
+        staffName: staff.name,
+        date: today,
+        clockInTime: new Date().toISOString(),
+        clockOutTime: null,
+        minutesWorked: 0
+      });
+      saveState();
     }
   }
 
@@ -717,10 +797,11 @@ app.post('/api/auth/login', (req: Request, res: Response) => {
     username: staff.username,
     role: staff.role,
     roleTitle: staff.roleTitle,
-    isActive: staff.isActive
+    isActive: staff.isActive,
+    hasSetPassword: staff.hasSetPassword
   };
 
-  res.json({ success: true, staff: sanitizedStaff });
+  res.json({ success: true, staff: sanitizedStaff, isFirstLogin: isFirstTime });
 });
 
 // 3. Attendance: Clock In
@@ -768,12 +849,42 @@ app.post('/api/attendance/clock-out', (req: Request, res: Response) => {
 
   const now = new Date();
   record.clockOutTime = now.toISOString();
-  const start = new Date(record.clockInTime).getTime();
-  const diffMinutes = Math.max(1, Math.round((now.getTime() - start) / (1000 * 60)));
-  record.minutesWorked = diffMinutes;
+  
+  // Calculate effective work minutes within business hours!
+  const calc = calculateEffectiveWorkMinutes(record, state.businessHours, now);
+  record.minutesWorked = calc.effectiveMinutes;
 
   saveState();
-  res.json({ success: true, record, attendance: state.attendance });
+  res.json({ success: true, record, attendance: state.attendance, effectiveMinutes: calc.effectiveMinutes, isOutsideBusinessHours: calc.isOutsideBusinessHours });
+});
+
+// Business Hours API
+app.get('/api/business-hours', (_req: Request, res: Response) => {
+  res.json({ success: true, businessHours: state.businessHours });
+});
+
+app.put('/api/business-hours', (req: Request, res: Response) => {
+  const { enabled, startTime, endTime, crossMidnight, statusOverride, autoClockInOnLogin } = req.body;
+  if (!state.businessHours) {
+    state.businessHours = {
+      enabled: true,
+      startTime: '20:00',
+      endTime: '00:00',
+      crossMidnight: false,
+      statusOverride: 'auto',
+      autoClockInOnLogin: true
+    };
+  }
+
+  if (enabled !== undefined) state.businessHours.enabled = Boolean(enabled);
+  if (startTime !== undefined) state.businessHours.startTime = String(startTime);
+  if (endTime !== undefined) state.businessHours.endTime = String(endTime);
+  if (crossMidnight !== undefined) state.businessHours.crossMidnight = Boolean(crossMidnight);
+  if (statusOverride !== undefined) state.businessHours.statusOverride = statusOverride;
+  if (autoClockInOnLogin !== undefined) state.businessHours.autoClockInOnLogin = Boolean(autoClockInOnLogin);
+
+  saveState();
+  res.json({ success: true, businessHours: state.businessHours });
 });
 
 // 5. Attendance: Manager Manual Edit
@@ -914,80 +1025,6 @@ app.put('/api/orders/:id', (req: Request, res: Response) => {
 });
 
 // 8. Orders: Checkout
-const DISCORD_WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL || 'https://discord.com/api/webhooks/1558771160785620992/oCDltPjwK7e8Qa2DUTQeZ_8uB2WlibfDkDiXiuBGA7j44eIsqKTg-1ycCdOWpc9WLG-Q';
-
-async function sendDiscordCheckoutWebhook(order: ReceptionOrder): Promise<void> {
-  if (!DISCORD_WEBHOOK_URL) return;
-
-  try {
-    const itemsList = order.items.length > 0
-      ? order.items.map(it => {
-          const staffTag = it.recommendedStaffName ? ` [${it.recommendedStaffName}推薦]` : '';
-          return `• **${it.name}**${staffTag} ×${it.quantity} — ${(it.unitPrice * it.quantity).toLocaleString('en-US')} Gil`;
-        }).join('\n')
-      : '• *(無點選餐點)*';
-
-    const servicesList = order.services.length > 0
-      ? order.services.map(sv => {
-          const detail = sv.serviceType === 'chat'
-            ? ` (${sv.sessions || 1}節/${(sv.sessions || 1) * 20}分)`
-            : sv.quantity && sv.quantity > 1
-            ? ` (×${sv.quantity}${sv.serviceType === 'sketch' ? '張' : '次'})`
-            : '';
-          const noteText = sv.note ? `\n   └ 備註：${sv.note}` : '';
-          return `• **${sv.name}**${detail} [${sv.staffName}] — ${sv.price.toLocaleString('en-US')} Gil${noteText}`;
-        }).join('\n')
-      : '• *(無特別侍奉服務)*';
-
-    let tipText = '無';
-    if (order.tip && order.tip.amount > 0) {
-      const tipTarget = order.tip.type === 'designated'
-        ? `指定給 ${order.tip.designatedStaffName || '侍從'}`
-        : '全店共同';
-      tipText = `${order.tip.amount.toLocaleString('en-US')} Gil (${tipTarget})`;
-    }
-
-    const payload = {
-      username: '夜蒔館 Yashi Manor · 結帳通報',
-      avatar_url: 'https://api.dicebear.com/7.x/bottts/svg?seed=Lyco',
-      embeds: [
-        {
-          title: '📜 夜蒔館 · 貴賓結帳明細通報',
-          description: `單據編號：\`${order.orderNumber}\``,
-          color: 0x5B88B4, // Manor Powder Blue
-          fields: [
-            { name: '👤 貴賓稱呼', value: order.guestName, inline: true },
-            { name: '🪑 入席桌號', value: order.tableNo || '自由席', inline: true },
-            { name: '🎩 擔當侍從', value: order.assignedStaffName || '未指定', inline: true },
-            { name: '🍽️ 典藏餐點明細', value: itemsList, inline: false },
-            { name: '✨ 特別侍奉服務', value: servicesList, inline: false },
-            { name: '💝 心意小費', value: tipText, inline: true },
-            { name: '💎 結帳應收總額', value: `**${order.totalAmount.toLocaleString('en-US')} Gil**`, inline: true },
-            { name: '🌟 薪資池挹注額', value: `${(order.poolContribution || 0).toLocaleString('en-US')} Gil`, inline: true }
-          ],
-          footer: { text: '夜蒔館 STAFF POS · 結帳完成自動通知' },
-          timestamp: new Date().toISOString()
-        }
-      ]
-    };
-
-    const res = await fetch(DISCORD_WEBHOOK_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-
-    if (!res.ok) {
-      const errText = await res.text();
-      console.error('Discord Webhook responded with status:', res.status, errText);
-    } else {
-      console.log(`Successfully sent Discord checkout webhook for order ${order.orderNumber}`);
-    }
-  } catch (err) {
-    console.error('Failed to send Discord webhook:', err);
-  }
-}
-
 app.post('/api/orders/:id/checkout', async (req: Request, res: Response) => {
   const { id } = req.params;
   const order = state.orders.find(o => o.id === id);
@@ -998,28 +1035,7 @@ app.post('/api/orders/:id/checkout', async (req: Request, res: Response) => {
   order.isLocked = true;
 
   saveState();
-
-  // Send Discord webhook notification
-  sendDiscordCheckoutWebhook(order).catch(err => {
-    console.error('Discord webhook dispatch error:', err);
-  });
-
   res.json({ success: true, order });
-});
-
-// Manual trigger of Discord webhook for an order
-app.post('/api/orders/:id/webhook', async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const order = state.orders.find(o => o.id === id);
-  if (!order) return res.status(404).json({ error: '找不到接待單' });
-
-  try {
-    await sendDiscordCheckoutWebhook(order);
-    res.json({ success: true, message: '已成功傳送結帳明細至 Discord' });
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : '傳送失敗';
-    res.status(500).json({ error: message });
-  }
 });
 
 // 9. Orders: Reopen (Manager only)
@@ -1121,7 +1137,8 @@ app.post('/api/settlement/close', (req: Request, res: Response) => {
     state.bonuses,
     true,
     new Date().toISOString(),
-    settledBy || '店長 賽菲兒'
+    settledBy || '總管店長 萊可',
+    state.businessHours
   );
 
   // Lock all orders for today
@@ -1161,7 +1178,7 @@ app.post('/api/staff', (req: Request, res: Response) => {
     role: role || 'maid',
     roleTitle: roleTitle || (role === 'manager' ? '店長' : role === 'butler' ? '執事侍從' : '女僕侍從'),
     isActive: true,
-    passwordHash: hashPassword(password || 'yashi123')
+    hasSetPassword: false
   };
 
   state.staffList.push(newStaff);
@@ -1179,10 +1196,25 @@ app.put('/api/staff/:id', (req: Request, res: Response) => {
   if (role !== undefined) staff.role = role;
   if (roleTitle !== undefined) staff.roleTitle = roleTitle;
   if (isActive !== undefined) staff.isActive = isActive;
-  if (password) staff.passwordHash = hashPassword(password);
+  if (password) {
+    staff.passwordHash = hashPassword(password);
+    staff.hasSetPassword = true;
+  }
 
   saveState();
   res.json({ success: true, staff });
+});
+
+// Reset staff password to first-time setup state
+app.post('/api/staff/:id/reset-password', (req: Request, res: Response) => {
+  const { id } = req.params;
+  const staff = state.staffList.find(s => s.id === id);
+  if (!staff) return res.status(404).json({ error: '員工不存在' });
+
+  staff.hasSetPassword = false;
+  staff.passwordHash = undefined;
+  saveState();
+  res.json({ success: true, message: `已將 ${staff.name} 重設為首次登入狀態，下次登入可自行設定新密碼` });
 });
 
 // 14. Backup & Reset

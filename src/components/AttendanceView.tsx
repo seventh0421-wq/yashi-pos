@@ -1,13 +1,16 @@
 import { useState } from 'react';
-import { Staff, AttendanceRecord } from '../types';
+import { Staff, AttendanceRecord, BusinessHoursConfig } from '../types';
 import { formatTime, formatDateTime } from '../lib/format';
+import { calculateEffectiveWorkMinutes, isCurrentlyBusinessHours } from '../lib/calculations';
 import { 
   Clock, 
   Play, 
   Square, 
   Edit3, 
   ShieldCheck, 
-  Calendar 
+  Calendar,
+  Moon,
+  Sun
 } from 'lucide-react';
 
 interface AttendanceViewProps {
@@ -18,6 +21,7 @@ interface AttendanceViewProps {
   onClockOut: (staffId: string) => Promise<void>;
   onUpdateAttendance: (id: string, updates: Record<string, unknown>) => Promise<void>;
   isClocking: boolean;
+  businessHours?: BusinessHoursConfig;
 }
 
 export function AttendanceView({
@@ -28,17 +32,23 @@ export function AttendanceView({
   onClockOut,
   onUpdateAttendance,
   isClocking,
+  businessHours,
 }: AttendanceViewProps) {
   const [editingRecord, setEditingRecord] = useState<AttendanceRecord | null>(null);
   const [editMinutes, setEditMinutes] = useState<number>(0);
   const [editNote, setEditNote] = useState<string>('');
 
   const isManager = currentStaff?.role === 'manager';
+  const isOpenNow = isCurrentlyBusinessHours(businessHours);
 
   const currentRecord = currentStaff 
     ? attendanceList.find(a => a.staffId === currentStaff.id) 
     : undefined;
   const isWorking = currentRecord && !currentRecord.clockOutTime;
+
+  const currentEffective = currentRecord 
+    ? calculateEffectiveWorkMinutes(currentRecord, businessHours, new Date())
+    : { effectiveMinutes: 0, isOutsideBusinessHours: false };
 
   const handleStartEdit = (record: AttendanceRecord) => {
     setEditingRecord(record);
@@ -118,14 +128,65 @@ export function AttendanceView({
               </span>
             </div>
             <div className="bg-[#FAF8F5] p-3 rounded-xl border border-[#E8E2D7]">
-              <span className="text-slate-500 block text-[11px]">今日累計工時</span>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500 block text-[11px]">今日有效工時</span>
+                {currentEffective.isOutsideBusinessHours && isWorking && (
+                  <span className="text-[10px] text-amber-800 bg-amber-100/80 px-1.5 py-0.2 rounded font-medium">
+                    非營業時段暫不計入
+                  </span>
+                )}
+              </div>
               <span className="font-mono text-sm font-semibold text-[#245280] mt-0.5 block">
-                {currentRecord.minutesWorked} 分鐘 (權重)
+                {currentRecord.clockOutTime 
+                  ? `${currentRecord.minutesWorked} 分鐘 (權重)` 
+                  : `${currentEffective.effectiveMinutes} 分鐘 (營業中累計)`
+                }
+              </span>
+              <span className="text-[10px] text-slate-400 block mt-0.5">
+                ※ 僅計入營業時段 ({businessHours?.startTime || '20:00'}～{businessHours?.endTime || '00:00'})
               </span>
             </div>
           </div>
         )}
       </div>
+
+      {/* Business Hours Rule Info Banner */}
+      {businessHours && (
+        <div className={`p-4 rounded-2xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs shadow-xs ${
+          isOpenNow 
+            ? 'bg-emerald-50/70 border-emerald-200 text-emerald-950' 
+            : 'bg-amber-50/70 border-amber-200 text-amber-950'
+        }`}>
+          <div className="flex items-center gap-3">
+            <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+              isOpenNow ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+            }`}>
+              {isOpenNow ? <Sun className="w-5 h-5 animate-spin" /> : <Moon className="w-5 h-5" />}
+            </div>
+            <div>
+              <span className="font-semibold block text-sm">
+                {isOpenNow 
+                  ? `夜蒔館正式營業中 · 時段：${businessHours.startTime} ～ ${businessHours.endTime}` 
+                  : `非營業時段 · 營業時段：${businessHours.startTime} ～ ${businessHours.endTime}`
+                }
+              </span>
+              <span className="text-[11px] text-slate-600">
+                {businessHours.enabled 
+                  ? '已啟用營業時段工時限制：店員於營業時間外登入或打卡不計工時，僅在營業期限內的時間方計算有效工時。' 
+                  : '未啟用營業時間限制，工時採全時段打卡計算。'
+                }
+              </span>
+            </div>
+          </div>
+          <span className={`text-[11px] font-mono font-medium px-3 py-1 rounded-lg border shrink-0 ${
+            isOpenNow 
+              ? 'bg-white text-emerald-800 border-emerald-300' 
+              : 'bg-white text-amber-800 border-amber-300'
+          }`}>
+            {isOpenNow ? '工時正常累計中' : '營業時間外登入不計工時'}
+          </span>
+        </div>
+      )}
 
       {/* Attendance Records Table */}
       <div className="bg-white border border-[#E8E2D7] rounded-2xl p-6 space-y-4 shadow-xs">
@@ -152,7 +213,7 @@ export function AttendanceView({
                 <th className="pb-3 font-medium">身分角色</th>
                 <th className="pb-3 font-medium">上班打卡時間</th>
                 <th className="pb-3 font-medium">下班打卡時間</th>
-                <th className="pb-3 font-medium text-right">工作分鐘 (權重)</th>
+                <th className="pb-3 font-medium text-right">有效工時 (權重)</th>
                 <th className="pb-3 font-medium text-center">狀態</th>
                 <th className="pb-3 font-medium text-right">備註／操作</th>
               </tr>
@@ -161,6 +222,12 @@ export function AttendanceView({
               {staffList.filter(s => s.isActive).map(staff => {
                 const record = attendanceList.find(a => a.staffId === staff.id);
                 const isStaffWorking = record && !record.clockOutTime;
+                const effective = record 
+                  ? calculateEffectiveWorkMinutes(record, businessHours, new Date()) 
+                  : { effectiveMinutes: 0, isOutsideBusinessHours: false };
+                const displayMinutes = record 
+                  ? (record.clockOutTime ? record.minutesWorked : effective.effectiveMinutes)
+                  : 0;
 
                 return (
                   <tr key={staff.id} className="hover:bg-[#FAF8F5] transition-colors">
@@ -180,7 +247,14 @@ export function AttendanceView({
                       {record?.clockOutTime ? formatTime(record.clockOutTime) : record ? '在勤中' : '--:--'}
                     </td>
                     <td className="py-3 font-mono font-semibold text-right text-[#245280]">
-                      {record ? `${record.minutesWorked} 分` : '0 分'}
+                      <div>
+                        <span>{displayMinutes} 分</span>
+                        {isStaffWorking && effective.isOutsideBusinessHours && (
+                          <span className="block text-[10px] text-amber-700 font-normal">
+                            非營業時段暫不計入
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="py-3 text-center">
                       {record ? (

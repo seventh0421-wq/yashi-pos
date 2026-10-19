@@ -9,6 +9,7 @@ export interface Staff {
   roleTitle: string; // e.g. "總管店長", "女僕侍從", "執事侍從"
   isActive: boolean;
   passwordHash?: string;
+  hasSetPassword?: boolean;
 }
 
 export interface AttendanceRecord {
@@ -163,6 +164,15 @@ export interface DaySettlementData {
   payouts: StaffPayout[];
 }
 
+export interface BusinessHoursConfig {
+  enabled: boolean;                      // 是否啟用營業時段工時限制
+  startTime: string;                    // 營業開始時間 (HH:mm)，預設 "20:00"
+  endTime: string;                      // 營業結束時間 (HH:mm)，預設 "00:00"
+  crossMidnight: boolean;               // 是否跨夜營業
+  statusOverride: 'auto' | 'force_open' | 'force_closed'; // 營業狀態強制覆寫
+  autoClockInOnLogin: boolean;          // 營業時段內登入時是否自動打卡上班
+}
+
 export interface AppState {
   currentStaff: Staff | null;
   staffList: Staff[];
@@ -173,4 +183,5 @@ export interface AppState {
   settlement: DaySettlementData;
   systemDate: string; // YYYY-MM-DD
   version: number;
+  businessHours: BusinessHoursConfig;
 }

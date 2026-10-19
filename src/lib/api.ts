@@ -1,4 +1,4 @@
-import { AppState, Staff, MenuItem, ReceptionOrder } from '../types';
+import { AppState, Staff, MenuItem, ReceptionOrder, BusinessHoursConfig } from '../types';
 
 export const api = {
   async getState(): Promise<AppState> {
@@ -7,11 +7,16 @@ export const api = {
     return res.json();
   },
 
-  async login(username?: string, password?: string, staffId?: string): Promise<{ success: boolean; staff: Staff }> {
+  async login(
+    username?: string, 
+    password?: string, 
+    staffId?: string,
+    newPassword?: string
+  ): Promise<{ success: boolean; staff: Staff; isFirstLogin?: boolean }> {
     const res = await fetch('/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password, staffId })
+      body: JSON.stringify({ username, password, staffId, newPassword })
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || '登入失敗');
@@ -82,14 +87,6 @@ export const api = {
     return data.order;
   },
 
-  async sendOrderWebhook(id: string) {
-    const res = await fetch(`/api/orders/${id}/webhook`, {
-      method: 'POST'
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || '傳送 Discord 通知失敗');
-    return data;
-  },
 
   async reopenOrder(id: string) {
     const res = await fetch(`/api/orders/${id}/reopen`, {
@@ -180,6 +177,15 @@ export const api = {
     return data.staff;
   },
 
+  async resetStaffPassword(staffId: string): Promise<{ success: boolean; message: string }> {
+    const res = await fetch(`/api/staff/${staffId}/reset-password`, {
+      method: 'POST'
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || '重設密碼失敗');
+    return data;
+  },
+
   async importBackup(importedState: AppState) {
     const res = await fetch('/api/backup/import', {
       method: 'POST',
@@ -196,5 +202,16 @@ export const api = {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || '重置失敗');
     return data.state;
+  },
+
+  async updateBusinessHours(updates: Partial<BusinessHoursConfig>) {
+    const res = await fetch('/api/business-hours', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updates)
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || '更新營業時段設定失敗');
+    return data.businessHours;
   }
 };

@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { AppState, MenuItem, Staff } from '../types';
+import { AppState, MenuItem, Staff, BusinessHoursConfig } from '../types';
 import { AdminMenuView } from './AdminMenuView';
 import { AdminStaffView } from './AdminStaffView';
 import { AdminBackupView } from './AdminBackupView';
-import { Utensils, Users, Database } from 'lucide-react';
+import { AdminBusinessHoursView } from './AdminBusinessHoursView';
+import { Utensils, Users, Database, Clock } from 'lucide-react';
 
 interface AdminViewProps {
   appState: AppState;
@@ -13,6 +14,8 @@ interface AdminViewProps {
   onUpdateStaff: (id: string, updates: Partial<Staff> & { password?: string }) => Promise<void>;
   onImportBackup: (imported: AppState) => Promise<void>;
   onResetBackup: () => Promise<void>;
+  onUpdateBusinessHours: (updates: Partial<BusinessHoursConfig>) => Promise<void>;
+  onResetStaffPassword?: (staffId: string) => Promise<void>;
 }
 
 export function AdminView({
@@ -23,10 +26,13 @@ export function AdminView({
   onUpdateStaff,
   onImportBackup,
   onResetBackup,
+  onUpdateBusinessHours,
+  onResetStaffPassword,
 }: AdminViewProps) {
-  const [activeSubTab, setActiveSubTab] = useState<'menu' | 'staff' | 'backup'>('menu');
+  const [activeSubTab, setActiveSubTab] = useState<'business_hours' | 'menu' | 'staff' | 'backup'>('business_hours');
 
   const subTabs = [
+    { id: 'business_hours', label: '營業時間與工時規則', icon: Clock },
     { id: 'menu', label: '商品與成本管理', icon: Utensils },
     { id: 'staff', label: '侍從帳號與身分', icon: Users },
     { id: 'backup', label: '資料備份與重置', icon: Database },
@@ -57,6 +63,13 @@ export function AdminView({
       </div>
 
       {/* Sub Views */}
+      {activeSubTab === 'business_hours' && (
+        <AdminBusinessHoursView
+          businessHours={appState.businessHours}
+          onUpdateBusinessHours={onUpdateBusinessHours}
+        />
+      )}
+
       {activeSubTab === 'menu' && (
         <AdminMenuView
           menu={appState.menu}
@@ -71,6 +84,7 @@ export function AdminView({
           staffList={appState.staffList}
           onAddStaff={onAddStaff}
           onUpdateStaff={onUpdateStaff}
+          onResetStaffPassword={onResetStaffPassword}
         />
       )}
 

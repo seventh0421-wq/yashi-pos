@@ -9,7 +9,8 @@
       "role": "manager",
       "roleTitle": "總管店長",
       "isActive": true,
-      "passwordHash": "14615a26d92dc44a96a672c7171f6e72f555fbb550108307613b8120ed23010f"
+      "passwordHash": "14615a26d92dc44a96a672c7171f6e72f555fbb550108307613b8120ed23010f",
+      "hasSetPassword": false
     },
     {
       "id": "staff-7",
@@ -18,7 +19,8 @@
       "username": "luco",
       "role": "maid",
       "roleTitle": "女僕侍從",
-      "isActive": true
+      "isActive": true,
+      "hasSetPassword": false
     },
     {
       "id": "staff-8",
@@ -27,7 +29,8 @@
       "username": "lili",
       "role": "maid",
       "roleTitle": "女僕侍從",
-      "isActive": true
+      "isActive": true,
+      "hasSetPassword": false
     },
     {
       "id": "staff-9",
@@ -36,7 +39,8 @@
       "username": "melon",
       "role": "butler",
       "roleTitle": "執事侍從",
-      "isActive": true
+      "isActive": true,
+      "hasSetPassword": false
     },
     {
       "id": "staff-10",
@@ -45,7 +49,8 @@
       "username": "potato",
       "role": "butler",
       "roleTitle": "執事侍從",
-      "isActive": true
+      "isActive": true,
+      "hasSetPassword": false
     },
     {
       "id": "staff-11",
@@ -54,7 +59,8 @@
       "username": "ghost",
       "role": "butler",
       "roleTitle": "執事侍從",
-      "isActive": true
+      "isActive": true,
+      "hasSetPassword": false
     },
     {
       "id": "staff-12",
@@ -63,7 +69,8 @@
       "username": "bunny",
       "role": "maid",
       "roleTitle": "女僕侍從",
-      "isActive": true
+      "isActive": true,
+      "hasSetPassword": false
     },
     {
       "id": "staff-13",
@@ -72,7 +79,8 @@
       "username": "takeshi",
       "role": "butler",
       "roleTitle": "執事侍從",
-      "isActive": true
+      "isActive": true,
+      "hasSetPassword": false
     }
   ],
   "attendance": [
@@ -84,6 +92,15 @@
       "clockInTime": "2026-10-11T07:10:10.265Z",
       "clockOutTime": null,
       "minutesWorked": 120
+    },
+    {
+      "id": "att-1792378926293",
+      "staffId": "staff-8",
+      "staffName": "栗栗皆辛苦 (Lili)",
+      "date": "2026-10-11",
+      "clockInTime": "2026-10-19T03:02:06.293Z",
+      "clockOutTime": null,
+      "minutesWorked": 0
     }
   ],
   "menu": [
@@ -483,10 +500,10 @@
     "photoCount": 0,
     "photoPool": 0,
     "totalPool": 206800,
-    "totalStaffMinutes": 133,
+    "totalStaffMinutes": 240,
     "totalBonusWeight": 0,
-    "totalShopWeight": 133,
-    "valuePerWeight": 1554.8872180451128,
+    "totalShopWeight": 240,
+    "valuePerWeight": 861.6666666666666,
     "tipsTotal": 30000,
     "tipsShared": 10000,
     "tipsDesignated": 20000,
@@ -495,9 +512,9 @@
         "staffId": "staff-2",
         "staffName": "萊可 (Lyco)",
         "role": "manager",
-        "workMinutes": 133,
+        "workMinutes": 240,
         "bonusWeight": 0,
-        "totalWeight": 133,
+        "totalWeight": 240,
         "estimatedSalary": 206800,
         "designatedTips": 20000,
         "totalIncome": 226800
@@ -582,5 +599,13 @@
     ]
   },
   "systemDate": "2026-10-11",
-  "version": 8
+  "version": 15,
+  "businessHours": {
+    "enabled": true,
+    "startTime": "20:00",
+    "endTime": "00:00",
+    "crossMidnight": false,
+    "statusOverride": "auto",
+    "autoClockInOnLogin": true
+  }
 }

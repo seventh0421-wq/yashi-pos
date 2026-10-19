@@ -1,4 +1,6 @@
-import { Staff, AttendanceRecord } from '../types';
+import { useState, useEffect, useMemo } from 'react';
+import { Staff, AttendanceRecord, BusinessHoursConfig } from '../types';
+import { isCurrentlyBusinessHours } from '../lib/calculations';
 import { YashiEmblem } from './YashiEmblem';
 import { 
   ClipboardList, 
@@ -24,6 +26,7 @@ interface NavbarProps {
   onOpenLogin: () => void;
   isClocking: boolean;
   unsettledOrdersCount: number;
+  businessHours?: BusinessHoursConfig;
 }
 
 export function Navbar({
@@ -37,9 +40,28 @@ export function Navbar({
   onOpenLogin,
   isClocking,
   unsettledOrdersCount,
+  businessHours,
 }: NavbarProps) {
   const isWorking = currentAttendance && !currentAttendance.clockOutTime;
   const isManager = currentStaff?.role === 'manager';
+  const isOpen = isCurrentlyBusinessHours(businessHours);
+
+  // Live real-world time (LT) clock
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const realTimeStr = useMemo(() => {
+    const hh = String(currentTime.getHours()).padStart(2, '0');
+    const mm = String(currentTime.getMinutes()).padStart(2, '0');
+    const ss = String(currentTime.getSeconds()).padStart(2, '0');
+    return `${hh}:${mm}:${ss}`;
+  }, [currentTime]);
 
   const navItems = [
     { id: 'dashboard', label: '接待櫃台', icon: ClipboardList, badge: unsettledOrdersCount > 0 ? unsettledOrdersCount : undefined },
@@ -100,8 +122,8 @@ export function Navbar({
         <div className="flex items-center gap-3 shrink-0">
           {currentStaff ? (
             <div className="flex items-center gap-2">
-              {/* Working Status Badge & Clock toggle */}
-              <div className="hidden sm:flex items-center gap-2 pr-2 border-r border-[#EAE3D6]">
+              {/* Working Status Badge, Clock toggle & Real-world Time underneath */}
+              <div className="hidden sm:flex flex-col items-center justify-center gap-0.5 pr-2.5 border-r border-[#EAE3D6]">
                 {isWorking ? (
                   <button
                     onClick={onClockOut}
@@ -125,6 +147,14 @@ export function Navbar({
                     <span>開始上班</span>
                   </button>
                 )}
+                {/* 現實時間 (LT) 顯示在上班中正下方 */}
+                <div 
+                  className="flex items-center gap-1 text-[10px] font-mono text-slate-500 leading-none mt-0.5 select-none"
+                  title="現實時間 (Local Time)"
+                >
+                  <Clock className="w-2.5 h-2.5 text-slate-400 shrink-0" />
+                  <span>LT {realTimeStr}</span>
+                </div>
               </div>
 
               {/* Staff Avatar & Info */}

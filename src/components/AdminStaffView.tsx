@@ -10,12 +10,14 @@ interface AdminStaffViewProps {
   staffList: Staff[];
   onAddStaff: (staff: Partial<Staff> & { password?: string }) => Promise<void>;
   onUpdateStaff: (id: string, updates: Partial<Staff> & { password?: string }) => Promise<void>;
+  onResetStaffPassword?: (staffId: string) => Promise<void>;
 }
 
 export function AdminStaffView({
   staffList,
   onAddStaff,
   onUpdateStaff,
+  onResetStaffPassword,
 }: AdminStaffViewProps) {
   const [editingStaff, setEditingStaff] = useState<Staff | null>(null);
   const [editPassword, setEditPassword] = useState('');
@@ -167,12 +169,33 @@ export function AdminStaffView({
               </div>
 
               <div>
-                <label className="block text-slate-700 mb-1 font-medium">重設密碼 (若留空則維持原密碼)：</label>
+                <label className="block text-slate-700 mb-1 font-medium">密碼設定狀態：</label>
+                <div className="flex items-center justify-between p-2.5 bg-[#FAF8F5] border border-[#DFD6C7] rounded-lg mb-2">
+                  <span className="text-[11px] text-slate-600">
+                    {editingStaff.hasSetPassword ? '✅ 員工已完成密碼設定' : '✨ 首次登入狀態（尚未設定密碼）'}
+                  </span>
+                  {onResetStaffPassword && editingStaff.hasSetPassword && (
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        if (confirm(`確定要將【${editingStaff.name}】重設為首次登入狀態嗎？員工下次登入時可自行設定新密碼。`)) {
+                          await onResetStaffPassword(editingStaff.id);
+                          setEditingStaff(null);
+                        }
+                      }}
+                      className="px-2.5 py-1 text-[11px] bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 rounded-md font-medium transition-colors cursor-pointer"
+                    >
+                      重設為首次登入
+                    </button>
+                  )}
+                </div>
+
+                <label className="block text-slate-700 mb-1 font-medium">手動變更密碼 (若留空則維持原密碼)：</label>
                 <input
                   type="password"
                   value={editPassword}
                   onChange={e => setEditPassword(e.target.value)}
-                  placeholder="輸入新密碼..."
+                  placeholder="輸入新密碼 (可直接由店長覆寫)..."
                   className="w-full p-2.5 bg-[#FAF8F5] border border-[#DFD6C7] rounded-lg text-slate-800"
                 />
               </div>

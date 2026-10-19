@@ -28,8 +28,7 @@ import {
   HeartHandshake,
   FileText,
   Play,
-  Clock,
-  Send
+  Clock
 } from 'lucide-react';
 
 interface OrderDetailViewProps {
@@ -56,8 +55,6 @@ export function OrderDetailView({
   const [selectedCategory, setSelectedCategory] = useState<MenuCategory | 'all'>('all');
   const [macroCopied, setMacroCopied] = useState(false);
   const [receiptCopied, setReceiptCopied] = useState(false);
-  const [discordSent, setDiscordSent] = useState(false);
-  const [isSendingDiscord, setIsSendingDiscord] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [showCheckoutConfirm, setShowCheckoutConfirm] = useState(false);
 
@@ -406,18 +403,6 @@ export function OrderDetailView({
     setTimeout(() => setReceiptCopied(false), 2500);
   };
 
-  const handleSendDiscordWebhook = async () => {
-    setIsSendingDiscord(true);
-    try {
-      await api.sendOrderWebhook(order.id);
-      setDiscordSent(true);
-      setTimeout(() => setDiscordSent(false), 2500);
-    } catch (err) {
-      console.error('Failed to send Discord webhook:', err);
-    } finally {
-      setIsSendingDiscord(false);
-    }
-  };
 
   const MIN_SPEND = 30000;
   const isBelowMinSpend = order.totalAmount < MIN_SPEND;
@@ -491,30 +476,10 @@ export function OrderDetailView({
           <button
             onClick={handleCopyReceipt}
             className="flex items-center gap-1.5 px-2.5 py-2 text-xs font-medium bg-[#F4EFE6] hover:bg-[#EAE2D3] text-slate-600 border border-[#DFD6C7] rounded-xl transition-all cursor-pointer"
-            title="複製完整點餐明細（適用 Discord 或客製紀錄）"
+            title="複製完整點餐明細與客製紀錄"
           >
             {receiptCopied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <FileText className="w-3.5 h-3.5 text-slate-500" />}
             <span className="hidden sm:inline">{receiptCopied ? '已複製明細！' : '明細帳單'}</span>
-          </button>
-
-          {/* Third button: 通報 Discord */}
-          <button
-            onClick={handleSendDiscordWebhook}
-            disabled={isSendingDiscord}
-            className="flex items-center gap-1.5 px-2.5 py-2 text-xs font-medium bg-[#E8F1F8] hover:bg-[#D5E5F2] text-[#245280] border border-[#BFD7EE] rounded-xl transition-all cursor-pointer shadow-xs active:scale-95 disabled:opacity-50"
-            title="傳送結帳明細到指定 Discord 頻道"
-          >
-            {discordSent ? (
-              <>
-                <Check className="w-3.5 h-3.5 text-emerald-600" />
-                <span className="font-semibold text-emerald-700">已傳送 Discord！</span>
-              </>
-            ) : (
-              <>
-                <Send className="w-3.5 h-3.5 text-[#5B88B4]" />
-                <span className="hidden sm:inline">{isSendingDiscord ? '發送中...' : '通報 Discord'}</span>
-              </>
-            )}
           </button>
 
           {isLocked ? (
@@ -1364,16 +1329,6 @@ export function OrderDetailView({
               </pre>
             </div>
 
-            {/* Automatic Discord Webhook Notification notice */}
-            <div className="p-2.5 bg-[#FAF8F5] border border-[#DFD6C7] rounded-xl flex items-center justify-between text-xs text-slate-600">
-              <span className="flex items-center gap-1.5 font-medium text-[#245280]">
-                <Send className="w-3.5 h-3.5 text-[#5B88B4]" />
-                結帳完成將自動發送明細至 Discord 頻道
-              </span>
-              <span className="text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full font-medium">
-                已連線
-              </span>
-            </div>
 
             <div className="pt-2 flex items-center justify-end gap-3">
               <button
