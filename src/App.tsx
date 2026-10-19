@@ -173,7 +173,7 @@ export default function App() {
   // Orders: Create, Update, Checkout, Reopen
   const handleCreateOrder = async (data: { guestName: string; assignedStaffId: string; tableNo?: string; notes?: string }) => {
     const newOrder = await api.createOrder(data);
-    showToast(`已為 ${newOrder.guestName} 開立接待單（桌號：${newOrder.tableNo}）`);
+    showToast(`已為 ${newOrder.guestName} 開立接待單`);
     await fetchState(false);
     setSelectedOrderId(newOrder.id);
   };

@@ -19,7 +19,6 @@ export function ReceptionModal({
 }: ReceptionModalProps) {
   const [guestName, setGuestName] = useState('');
   const [assignedStaffId, setAssignedStaffId] = useState(currentStaff?.id || staffList[0]?.id || '');
-  const [tableNo, setTableNo] = useState('薔薇席 01');
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -38,7 +37,6 @@ export function ReceptionModal({
       await onCreate({
         guestName: guestName.trim(),
         assignedStaffId: assignedStaffId || currentStaff?.id || staffList[0]?.id,
-        tableNo: tableNo.trim(),
         notes: notes.trim()
       });
       setGuestName('');
@@ -52,7 +50,6 @@ export function ReceptionModal({
   };
 
   const presetTitles = ['主人', '大小姐', '少爺', '貴賓'];
-  const presetTables = ['薔薇席 01', '薔薇席 02', '水晶廊 01', '水晶廊 02', '月光包廂', '洋館沙發區'];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200">
@@ -133,36 +130,6 @@ export function ReceptionModal({
               ))}
             </select>
             <p className="text-[11px] text-slate-500 mt-1">預設為當前登入侍從，可指派其他當席同仁</p>
-          </div>
-
-          {/* Table / Seating */}
-          <div>
-            <label className="block text-xs font-medium text-slate-700 mb-1.5">
-              入席桌號／位置 (Table / Salon)
-            </label>
-            <input
-              type="text"
-              value={tableNo}
-              onChange={e => setTableNo(e.target.value)}
-              placeholder="例如：薔薇席 01"
-              className="w-full px-3.5 py-2.5 text-xs bg-[#FAF8F5] border border-[#DFD6C7] rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#5B88B4]"
-            />
-            <div className="flex flex-wrap gap-1.5 mt-2">
-              {presetTables.map(tbl => (
-                <button
-                  type="button"
-                  key={tbl}
-                  onClick={() => setTableNo(tbl)}
-                  className={`px-2 py-0.5 text-[11px] rounded border transition-colors cursor-pointer ${
-                    tableNo === tbl
-                      ? 'bg-[#E8F1F8] border-[#BFD7EE] text-[#245280] font-medium'
-                      : 'bg-[#FAF8F5] border-[#DFD6C7] text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  {tbl}
-                </button>
-              ))}
-            </div>
           </div>
 
           {/* Special Notes */}

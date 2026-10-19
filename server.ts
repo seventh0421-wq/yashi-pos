@@ -922,7 +922,7 @@ app.post('/api/orders', (req: Request, res: Response) => {
     guestName: guestName.trim(),
     assignedStaffId: staff.id,
     assignedStaffName: staff.name,
-    tableNo: tableNo || '自由席',
+    tableNo: tableNo || '',
     entryTime: new Date().toISOString(),
     status: 'active',
     items: [],

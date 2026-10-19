@@ -190,7 +190,7 @@ export function SettlementView({
                       onClick={() => onNavigateToOrder(o)}
                       className="px-2.5 py-0.5 text-[10px] bg-white hover:bg-[#F3ECE1] text-[#245280] rounded-lg border border-[#BFD7EE] cursor-pointer"
                     >
-                      前往 {o.guestName} ({o.tableNo})
+                      前往 {o.guestName}
                     </button>
                   ))}
                 </div>

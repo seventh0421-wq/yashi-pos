@@ -71,7 +71,6 @@ export function generateBillReceiptText(order: ReceptionOrder): string {
 ✦━━━━━━━━━━━━━━━━━━━━✦
 貴賓稱呼：${order.guestName}
 擔當侍從：${order.assignedStaffName}
-入館桌號：${order.tableNo || '自由席'}
 入館時間：${formatTime(order.entryTime)}
 結帳時間：${formatTime(order.settledTime || new Date().toISOString())}
 單據編號：${order.orderNumber}

@@ -79,7 +79,7 @@ export function DashboardView({
       const matchStatus = statusFilter === 'all' || o.status === statusFilter;
       const matchQuery = !searchQuery.trim() || 
         o.guestName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        o.tableNo.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (o.tableNo ? o.tableNo.toLowerCase().includes(searchQuery.toLowerCase()) : false) ||
         o.assignedStaffName.toLowerCase().includes(searchQuery.toLowerCase()) ||
         o.orderNumber.toLowerCase().includes(searchQuery.toLowerCase());
       return matchStatus && matchQuery;
@@ -241,7 +241,7 @@ export function DashboardView({
                     <span className="text-[10px] text-[#245280] font-medium">[{service.staffName}]</span>
                   </div>
                   <div className="text-[11px] text-slate-500 mt-0.5">
-                    貴賓：{order.guestName} · {order.tableNo}
+                    貴賓：{order.guestName}
                   </div>
                 </div>
                 <div className="text-right">
@@ -342,7 +342,7 @@ export function DashboardView({
                           {order.isLocked && <Lock className="w-3 h-3 text-slate-400" />}
                         </div>
                         <span className="text-[11px] text-slate-500 font-mono mt-0.5 block">
-                          {order.tableNo} · {order.orderNumber}
+                          {order.orderNumber}
                         </span>
                       </div>
                       <span className={`text-[10px] px-2 py-0.5 rounded font-medium border ${statusColor}`}>

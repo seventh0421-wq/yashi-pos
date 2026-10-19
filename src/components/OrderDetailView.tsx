@@ -439,9 +439,6 @@ export function OrderDetailView({
             <div className="flex items-center gap-2">
               <h1 className="font-manor text-lg font-bold text-slate-800 flex items-center gap-2">
                 {order.guestName}
-                <span className="text-xs px-2.5 py-0.5 rounded font-mono font-medium bg-[#E8F1F8] text-[#245280] border border-[#BFD7EE]">
-                  {order.tableNo}
-                </span>
               </h1>
               {isLocked && (
                 <span className="flex items-center gap-1 text-[11px] text-amber-800 font-medium px-2 py-0.5 rounded bg-amber-50 border border-amber-200">
@@ -1277,10 +1274,6 @@ export function OrderDetailView({
               <div className="flex justify-between text-slate-600">
                 <span>貴賓稱呼：</span>
                 <span className="text-slate-800 font-semibold">{order.guestName}</span>
-              </div>
-              <div className="flex justify-between text-slate-600">
-                <span>入席桌號：</span>
-                <span className="text-slate-800">{order.tableNo}</span>
               </div>
               <div className="flex justify-between text-slate-600">
                 <span>擔當侍從：</span>

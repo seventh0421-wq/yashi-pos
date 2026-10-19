@@ -97,7 +97,7 @@ export interface ReceptionOrder {
   guestName: string; // 主人／大小姐名稱
   assignedStaffId: string; // 擔當侍從
   assignedStaffName: string;
-  tableNo: string;
+  tableNo?: string;
   entryTime: string; // ISO
   settledTime?: string; // ISO
   status: ReceptionStatus;
